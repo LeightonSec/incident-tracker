@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Detail — LeightonSec</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        .back-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .back-link:hover { color: #00ff88; }
+
+        .ticket-header {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .ticket-header.Critical { border-left: 4px solid #ff4444; }
+        .ticket-header.High { border-left: 4px solid #ff8800; }
+        .ticket-header.Medium { border-left: 4px solid #ffaa00; }
+        .ticket-header.Low { border-left: 4px solid #00ff88; }
+
+        .ticket-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .ticket-id { color: #666; font-size: 0.85rem; margin-bottom: 8px; }
+        .ticket-title { font-size: 1.3rem; font-weight: bold; }
+
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .priority-Critical { background: #ff4444; color: #fff; }
+        .priority-High { background: #ff8800; color: #fff; }
+        .priority-Medium { background: #ffaa00; color: #000; }
+        .priority-Low { background: #00ff88; color: #000; }
+        .status-badge { background: #333; color: #e0e0e0; }
+        .escalated-badge { background: #ff4444; color: #fff; }
+
+        .ticket-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .ticket-field { padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+        .field-label { color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        .field-value { color: #e0e0e0; font-size: 0.9rem; margin-top: 4px; }
+
+        .section {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #00ff88;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .description-text {
+            color: #e0e0e0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Update form */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 8px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            outline: none;
+        }
+        .form-group textarea { height: 80px; resize: vertical; }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { border-color: #00ff88; }
+
+        button {
+            padding: 8px 20px;
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        button:hover { background: #00cc6a; }
+
+        button.danger {
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+
+        button.danger:hover { background: #ff4444; color: #fff; }
+
+        .button-row { display: flex; gap: 12px; margin-top: 16px; }
+
+        /* Comments */
+        .comment {
+            padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .comment-meta { color: #666; font-size: 0.75rem; margin-bottom: 6px; }
+        .comment-content { color: #e0e0e0; font-size: 0.9rem; line-height: 1.5; }
+
+        .comment-form { margin-top: 16px; }
+        .comment-form textarea {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            height: 80px;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 8px;
+        }
+
+        .comment-form input {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 8px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            outline: none;
+            margin-bottom: 8px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+
+        <div id="ticketHeader"></div>
+
+        <div class="section">
+            <h2>Description</h2>
+            <div class="description-text" id="ticketDescription"></div>
+        </div>
+
+        <div class="section">
+            <h2>Update Ticket</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="updateStatus">
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="updatePriority">
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <input type="text" id="updateAssignedTo" placeholder="Analyst name">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <select id="updateDepartment">
+                        <option value="SOC Tier 1">SOC Tier 1</option>
+                        <option value="SOC Tier 2">SOC Tier 2</option>
+                        <option value="Management">Management</option>
+                        <option value="IT">IT</option>
+                        <option value="Legal">Legal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Remedy</label>
+                <textarea id="updateRemedy" placeholder="Actions taken to resolve this incident"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Escalation Reason</label>
+                <textarea id="updateEscalation" placeholder="Reason for escalation (if applicable)"></textarea>
+            </div>
+            <div class="button-row">
+                <button onclick="updateTicket()">Update Ticket</button>
+                <button class="danger" onclick="deleteTicket()">Delete Ticket</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Comments</h2>
+            <div id="commentsList"></div>
+            <div class="comment-form">
+                <input type="text" id="commentAuthor" placeholder="Your name">
+                <textarea id="commentContent" placeholder="Add a comment..."></textarea>
+                <button onclick="addComment()">Add Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ticketId = "{{ ticket_id }}";
+        let currentTicket = null;
+
+        async function loadTicket() {
+            const res = await fetch(`/api/tickets/${ticketId}`);
+            if (!res.ok) {
+                document.body.innerHTML = '<div style="text-align:center;padding:100px;color:#666">Ticket not found</div>';
+                return;
+            }
+            const ticket = await res.json();
+            currentTicket = ticket;
+            renderTicket(ticket);
+            renderComments(ticket.comments || []);
+        }
+
+        function renderTicket(t) {
+            document.title = `${t.ticket_id} — LeightonSec`;
+
+            document.getElementById('ticketHeader').innerHTML = `
+                <div class="ticket-header ${t.priority}">
+                    <div class="ticket-top">
+                        <div>
+                            <div class="ticket-id">${t.ticket_id}</div>
+                            <div class="ticket-title">${t.title}</div>
+                        </div>
+                        <div class="badges">
+                            <span class="badge priority-${t.priority}">${t.priority}</span>
+                            <span class="badge status-badge">${t.status}</span>
+                            ${t.escalated ? '<span class="badge escalated-badge">ESCALATED</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="ticket-grid">
+                        <div class="ticket-field">
+                            <div class="field-label">Category</div>
+                            <div class="field-value">${t.category}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Source</div>
+                            <div class="field-value">${t.source}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Source IP</div>
+                            <div class="field-value">${t.source_ip || '—'}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Location</div>
+                            <div class="field-value">${t.location || '—'}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Department</div>
+                            <div class="field-value">${t.department}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Assigned To</div>
+                            <div class="field-value">${t.assigned_to || 'Unassigned'}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Issuer</div>
+                            <div class="field-value">${t.issuer || '—'}</div>
+                        </div>
+                        <div class="ticket-field">
+                            <div class="field-label">Created</div>
+                            <div class="field-value">${formatDate(t.created_at)}</div>
+                        </div>
+                        ${t.remedy ? `
+                        <div class="ticket-field" style="grid-column: 1/-1">
+                            <div class="field-label">Remedy</div>
+                            <div class="field-value">${t.remedy}</div>
+                        </div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('ticketDescription').textContent = t.description;
+
+            document.getElementById('updateStatus').value = t.status;
+            document.getElementById('updatePriority').value = t.priority;
+            document.getElementById('updateAssignedTo').value = t.assigned_to || '';
+            document.getElementById('updateDepartment').value = t.department;
+            document.getElementById('updateRemedy').value = t.remedy || '';
+            document.getElementById('updateEscalation').value = t.escalation_reason || '';
+        }
+
+        function renderComments(comments) {
+            const list = document.getElementById('commentsList');
+            if (comments.length === 0) {
+                list.innerHTML = '<div style="color:#666;font-size:0.85rem">No comments yet</div>';
+                return;
+            }
+            list.innerHTML = comments.map(c => `
+                <div class="comment">
+                    <div class="comment-meta">${c.author} · ${formatDate(c.created_at)}</div>
+                    <div class="comment-content">${c.content}</div>
+                </div>
+            `).join('');
+        }
+
+        async function updateTicket() {
+            const data = {
+                status: document.getElementById('updateStatus').value,
+                priority: document.getElementById('updatePriority').value,
+                assigned_to: document.getElementById('updateAssignedTo').value,
+                department: document.getElementById('updateDepartment').value,
+                remedy: document.getElementById('updateRemedy').value,
+                escalation_reason: document.getElementById('updateEscalation').value,
+                escalated: document.getElementById('updateEscalation').value.length > 0
+            };
+
+            const res = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                loadTicket();
+            } else {
+                alert('Error updating ticket');
+            }
+        }
+
+        async function deleteTicket() {
+            if (!confirm(`Delete ticket ${ticketId}? This cannot be undone.`)) return;
+
+            const res = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+            if (res.ok) {
+                window.location = '/';
+            } else {
+                alert('Error deleting ticket');
+            }
+        }
+
+        async function addComment() {
+            const author = document.getElementById('commentAuthor').value.trim();
+            const content = document.getElementById('commentContent').value.trim();
+
+            if (!content) { alert('Comment cannot be empty'); return; }
+
+            const res = await fetch(`/api/tickets/${ticketId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ author: author || 'Anonymous', content })
+            });
+
+            if (res.ok) {
+                document.getElementById('commentContent').value = '';
+                loadTicket();
+            } else {
+                alert('Error adding comment');
+            }
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        loadTicket();
+    </script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Tracker — LeightonSec</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: #00ff88;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        header p { color: #666; margin-top: 8px; font-size: 0.85rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-number { font-size: 1.8rem; font-weight: bold; color: #00ff88; }
+        .stat-number.critical { color: #ff4444; }
+        .stat-number.warning { color: #ffaa00; }
+        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        select, input {
+            background: #111;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        select:focus, input:focus { border-color: #00ff88; }
+
+        button {
+            padding: 8px 20px;
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        button:hover { background: #00cc6a; }
+        button.secondary {
+            background: transparent;
+            border: 1px solid #333;
+            color: #e0e0e0;
+        }
+        button.secondary:hover { border-color: #00ff88; color: #00ff88; }
+
+        .ticket-list { margin-bottom: 30px; }
+
+        .ticket-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            gap: 16px;
+            align-items: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .ticket-card:hover { border-color: #00ff88; }
+        .ticket-card.Critical { border-left: 4px solid #ff4444; }
+        .ticket-card.High { border-left: 4px solid #ff8800; }
+        .ticket-card.Medium { border-left: 4px solid #ffaa00; }
+        .ticket-card.Low { border-left: 4px solid #00ff88; }
+
+        .ticket-id { color: #666; font-size: 0.8rem; white-space: nowrap; }
+        .ticket-title { font-weight: bold; font-size: 0.95rem; }
+        .ticket-meta { color: #666; font-size: 0.75rem; margin-top: 4px; }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .priority-Critical { background: #ff4444; color: #fff; }
+        .priority-High { background: #ff8800; color: #fff; }
+        .priority-Medium { background: #ffaa00; color: #000; }
+        .priority-Low { background: #00ff88; color: #000; }
+        .status-Open { background: #333; color: #e0e0e0; }
+        .status-In.Progress { background: #1a3a6b; color: #88aaff; }
+        .status-Resolved { background: #1a3a1a; color: #00ff88; }
+        .status-Closed { background: #222; color: #666; }
+
+        .escalated-badge {
+            background: #ff4444;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .modal h2 {
+            color: #00ff88;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; color: #666; font-size: 0.8rem; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            outline: none;
+        }
+        .form-group textarea { height: 100px; resize: vertical; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #00ff88; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+
+        .empty-state { text-align: center; color: #666; padding: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Incident Tracker</h1>
+            <p>SOC Ticketing System — LeightonSec</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-number" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number warning" id="statOpen">0</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="statInProgress">0</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="statResolved">0</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number critical" id="statCritical">0</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number critical" id="statEscalated">0</div>
+                <div class="stat-label">Escalated</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <select id="filterStatus" onchange="loadTickets()">
+                <option value="">All Statuses</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+            </select>
+            <select id="filterPriority" onchange="loadTickets()">
+                <option value="">All Priorities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <select id="filterSource" onchange="loadTickets()">
+                <option value="">All Sources</option>
+                <option value="Manual">Manual</option>
+                <option value="AI Firewall">AI Firewall</option>
+                <option value="PCAP Analyser">PCAP Analyser</option>
+                <option value="Log Analyser">Log Analyser</option>
+                <option value="Intel Pipeline">Intel Pipeline</option>
+            </select>
+            <button onclick="openCreateModal()">+ New Ticket</button>
+        </div>
+
+        <div class="ticket-list" id="ticketList">
+            <div class="empty-state">Loading tickets...</div>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal">
+            <h2>Create New Ticket</h2>
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="newTitle" placeholder="Brief description of the incident">
+            </div>
+            <div class="form-group">
+                <label>Description *</label>
+                <textarea id="newDescription" placeholder="Detailed description of the incident"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="newPriority">
+                        <option value="Medium">Medium</option>
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="newCategory">
+                        <option value="General">General</option>
+                        <option value="Malware">Malware</option>
+                        <option value="DDoS">DDoS</option>
+                        <option value="Phishing">Phishing</option>
+                        <option value="Ransomware">Ransomware</option>
+                        <option value="Data Breach">Data Breach</option>
+                        <option value="Unauthorised Access">Unauthorised Access</option>
+                        <option value="Port Scan">Port Scan</option>
+                        <option value="ARP Spoofing">ARP Spoofing</option>
+                        <option value="C2 Beaconing">C2 Beaconing</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Department</label>
+                    <select id="newDepartment">
+                        <option value="SOC Tier 1">SOC Tier 1</option>
+                        <option value="SOC Tier 2">SOC Tier 2</option>
+                        <option value="Management">Management</option>
+                        <option value="IT">IT</option>
+                        <option value="Legal">Legal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Source</label>
+                    <select id="newSource">
+                        <option value="Manual">Manual</option>
+                        <option value="AI Firewall">AI Firewall</option>
+                        <option value="PCAP Analyser">PCAP Analyser</option>
+                        <option value="Log Analyser">Log Analyser</option>
+                        <option value="Intel Pipeline">Intel Pipeline</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Issuer</label>
+                    <input type="text" id="newIssuer" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label>Source IP</label>
+                    <input type="text" id="newSourceIp" placeholder="e.g. 192.168.1.100">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="newLocation" placeholder="e.g. Stockholm Office, Cloud AWS-EU">
+            </div>
+            <div class="modal-actions">
+                <button class="secondary" onclick="closeCreateModal()">Cancel</button>
+                <button onclick="createTicket()">Create Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadStats() {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            document.getElementById('statTotal').textContent = data.total;
+            document.getElementById('statOpen').textContent = data.open;
+            document.getElementById('statInProgress').textContent = data.in_progress;
+            document.getElementById('statResolved').textContent = data.resolved;
+            document.getElementById('statCritical').textContent = data.critical;
+            document.getElementById('statEscalated').textContent = data.escalated;
+        }
+
+        async function loadTickets() {
+            const status = document.getElementById('filterStatus').value;
+            const priority = document.getElementById('filterPriority').value;
+            const source = document.getElementById('filterSource').value;
+
+            let url = '/api/tickets?';
+            if (status) url += `status=${encodeURIComponent(status)}&`;
+            if (priority) url += `priority=${encodeURIComponent(priority)}&`;
+            if (source) url += `source=${encodeURIComponent(source)}&`;
+
+            const res = await fetch(url);
+            const tickets = await res.json();
+            renderTickets(tickets);
+        }
+
+        function renderTickets(tickets) {
+            const list = document.getElementById('ticketList');
+            if (tickets.length === 0) {
+                list.innerHTML = '<div class="empty-state">No tickets found</div>';
+                return;
+            }
+
+            list.innerHTML = tickets.map(t => `
+                <div class="ticket-card ${t.priority}" onclick="window.location='/ticket/${t.ticket_id}'">
+                    <div class="ticket-id">${t.ticket_id}</div>
+                    <div>
+                        <div class="ticket-title">${t.title}</div>
+                        <div class="ticket-meta">${t.category} · ${t.department} · ${t.source} · ${formatDate(t.created_at)}</div>
+                    </div>
+                    <div><span class="badge priority-${t.priority}">${t.priority}</span></div>
+                    <div><span class="badge status-${t.status}">${t.status}</span></div>
+                    <div>${t.escalated ? '<span class="escalated-badge">ESCALATED</span>' : ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+        }
+
+        async function createTicket() {
+            const title = document.getElementById('newTitle').value.trim();
+            const description = document.getElementById('newDescription').value.trim();
+
+            if (!title || !description) {
+                alert('Title and description are required');
+                return;
+            }
+
+            const data = {
+                title,
+                description,
+                priority: document.getElementById('newPriority').value,
+                category: document.getElementById('newCategory').value,
+                department: document.getElementById('newDepartment').value,
+                source: document.getElementById('newSource').value,
+                issuer: document.getElementById('newIssuer').value,
+                source_ip: document.getElementById('newSourceIp').value,
+                location: document.getElementById('newLocation').value,
+            };
+
+            const res = await fetch('/api/tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                closeCreateModal();
+                loadTickets();
+                loadStats();
+            } else {
+                const err = await res.json();
+                alert('Error: ' + err.error);
+            }
+        }
+
+        // Initial load
+        loadStats();
+        loadTickets();
+
+        // Auto refresh every 30 seconds
+        setInterval(() => { loadStats(); loadTickets(); }, 30000);
+    </script>
+</body>
+</html>
