@@ -164,7 +164,7 @@ Visibility   → Unified Dashboard (planned)
 
 ## Author
 
-**Leighton Wilson** — IT Deployment Engineer transitioning into Cybersecurity  
+**Leighton Wilson** —  SOC Analyst | LeightonSec 
 [LeightonSec GitHub](https://github.com/LeightonSec)
 
 ---
